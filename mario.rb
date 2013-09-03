@@ -4,14 +4,17 @@ require "./mod.rb"
 class Mario < Graph
   mods :pftwService, :pftwApp, :agent, :mi6, :jobFlow, :browser, :printer, :appServer
 
-  mi6          "MI6"
-  pftwService  "printFromTheWeb Service"
-  jobFlow      "Job Flow"
-  agent        "Agent"
-  browser      "Browser"                 ,shape: :octagon
-  printer      "Printer"                 ,shape: :octagon
-  pftwApp      "printFromTheWeb App"     ,shape: :folder
-  appServer    "Application"             ,shape: :folder
+  pftwApp      "printFromTheWeb App"      , rank: 1, type: :rails
+  jobFlow      "Job Flow"                 , rank: 1
+  appServer    "Application"              , rank: 1, type: :rails
+
+  mi6          "MI6"                      , rank: 2
+  pftwService  "printFromTheWeb Service"  , rank: 2
+
+  agent        "Agent"                    , rank: 3
+
+  browser      "Browser"                  , rank: 4, type: :notSw
+  printer      "Printer"                  , rank: 4, type: :notSw
 
   # Control flows -- invoking print, get the PCL
   cflows :print, :getPcl
@@ -26,8 +29,8 @@ class Mario < Graph
   # Data flows -- the PCL, the image URL
   flows :pcl, :imageUrl, :imagePng
   pcl         "PCL", [:jobFlow, :mi6, :agent, :printer]
-  imageUrl    "URL", [:pftwApp, :pftwService, :jobFlow]
-  imagePng    "PNG", [:appServer, :jobFlow]
+  imageUrl    "URL", [:pftwApp, :pftwService, :jobFlow], importance: :secondary
+  imagePng    "PNG", [:appServer, :jobFlow], importance: :secondary
 
 end
 

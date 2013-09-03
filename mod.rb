@@ -14,6 +14,19 @@ module GraphMod
           @mods[a] = options
           @mods[a][:label] = label
 
+          if options[:type] == :rails
+            @mods[a][:shape] = :folder
+          elsif options[:type] == :notSw
+            @mods[a][:shape] = :octagon
+          else #options[:type] == :networking
+            @mods[a][:shape] = :box
+            @mods[a][:penwidth] = 3
+            @mods[a][:color] = :blue
+          end
+
+          #@mods[a].delete :rank
+          @mods[a].delete :type
+
         end
       end
     end
@@ -30,21 +43,76 @@ module GraphMod
       define_method( :to_s ) do
 
         puts "digraph {"
+        puts "  rankdir=TB;"
+        #puts "  splines=true;"
+        puts "  nodesep=1.5;"
+        puts "  ranksep=1.0;"
 
         # The modules
+        puts "  { rank=same; "
         self.class.mods.each do |k,v|
-          x = v.map do |vk, vv|
-            "#{vk}=\"#{vv}\""
-          end.join(' ')
+          if v[:rank] == 1
+            x = v.map do |vk, vv|
+              "#{vk}=\"#{vv}\"" if vk != :rank
+            end.join(' ')
 
-          puts "  #{k} [#{x}];"
+            puts "  #{k} [#{x}];"
+          end
+        end
+        puts "  }"
+
+        puts "  { rank=same; "
+        self.class.mods.each do |k,v|
+          if v[:rank] == 2
+            x = v.map do |vk, vv|
+              "#{vk}=\"#{vv}\"" if vk != :rank
+            end.join(' ')
+
+            puts "  #{k} [#{x}];"
+          end
+        end
+        puts "  }"
+
+        puts "  { rank=same; "
+        self.class.mods.each do |k,v|
+          if v[:rank] == 3
+            x = v.map do |vk, vv|
+              "#{vk}=\"#{vv}\"" if vk != :rank
+            end.join(' ')
+
+            puts "  #{k} [#{x}];"
+          end
+        end
+        puts "  }"
+
+        puts "  { rank=same; "
+        self.class.mods.each do |k,v|
+          if v[:rank] == 4 || v[:rank].nil?
+            x = v.map do |vk, vv|
+              "#{vk}=\"#{vv}\"" if vk != :rank
+            end.join(' ')
+
+            puts "  #{k} [#{x}];"
+          end
+        end
+        puts "  }"
+
+        # Data flow
+        self.class.flows.each do |k,v|
+          if v[:importance] != :secondary
+            puts ""
+            puts "  // #{v['name']}"
+            puts "  " + v['mods'].join(' -> ') + " [color=blue penwidth=2.5];"
+          end
         end
 
         # Data flow
         self.class.flows.each do |k,v|
-          puts ""
-          puts "  // #{v['name']}"
-          puts "  " + v['mods'].join(' -> ') + " [color=blue penwidth=2.5];"
+          if v[:importance] == :secondary
+            puts ""
+            puts "  // #{v['name']}"
+            puts "  " + v['mods'].join(' -> ') + " [color=blue penwidth=1.0];"
+          end
         end
 
         # Control flow
