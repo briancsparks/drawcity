@@ -1,6 +1,79 @@
 
+def grout(str)
+  puts str
+end
+
+def attrs(x_, options = {})
+  x = x_
+  x = x.merge(options[:extra]) if !options[:extra].nil?
+
+  str = x.map do |k, v|
+    if !options[:skip].nil?
+      "#{k}=\"#{v}\"" unless options[:skip].include? k
+    else
+      "#{k}=\"#{v}\""
+    end
+  end.join(' ')
+
+  "[ #{str} ]"
+end
+
+module GvItemMod
+  def geom(options)
+    @geom ||= {}
+
+    options.each do |k, v|
+      #attr_accessor(k)
+      @geom[k] = v
+    end
+
+    # Define class-level methods
+    #class_eval do
+      define_method( :initialize ) do | options_ |
+        @geom ||= {}
+
+        options_.merge(options).each do |k, v|
+          if (k == :rank)
+            @rank = v
+          else
+            @geom[k] = v
+          end
+        end
+      end
+
+      define_method( :rank ) do
+        return @rank || 99
+      end
+
+      define_method( :to_s ) do
+        "#{attrs(@geom)}"
+      end
+    #end
+
+  end
+
+end
+
+class GvItem
+  extend GvItemMod
+end
+
 module GraphMod
   def metaclass; class << self; self; end; end
+
+  def mods2( *arr )
+    return @mods2 || {} if arr.empty?
+
+    arr.each do |name|
+      metaclass.instance_eval do
+        define_method(name) do |item|
+          @mods2 ||= {}
+          @mods2[name] = {}
+          @mods2[name][:item] = item
+        end
+      end
+    end
+  end
 
   def mods( *arr )
     return @mods if arr.empty?
@@ -42,87 +115,64 @@ module GraphMod
       # The magic function to create the output
       define_method( :to_s ) do
 
-        puts "digraph {"
-        puts "  rankdir=TB;"
-        #puts "  splines=true;"
-        puts "  nodesep=1.5;"
-        puts "  ranksep=1.0;"
+        grout "digraph {"
+        grout "  rankdir=TB;"
+        #grout "  splines=true;"
+        grout "  nodesep=1.5;"
+        grout "  ranksep=1.0;"
 
         # The modules
-        puts "  { rank=same; "
-        self.class.mods.each do |k,v|
-          if v[:rank] == 1
-            x = v.map do |vk, vv|
-              "#{vk}=\"#{vv}\"" if vk != :rank
-            end.join(' ')
+        (1..10).each do |r|
 
-            puts "  #{k} [#{x}];"
+          node_group = []
+
+          self.class.mods.each do |k,v|
+            if v[:rank] == r
+              node_group << "    #{k} #{attrs(v, skip: [:rank])};"
+            end
+          end
+
+          self.class.mods2.each do |k,v|
+            if v[:item].rank == r
+              node_group << "    #{k} #{v[:item]};"
+            #  node_group << "    #{k} #{attrs(v, skip: [:rank])};"
+            end
+            #node_group << m.to_s
+          end
+
+          if node_group.length > 0
+            grout "  {\n    rank=same; "
+            grout node_group.join("\n")
+            grout "  }"
           end
         end
-        puts "  }"
-
-        puts "  { rank=same; "
-        self.class.mods.each do |k,v|
-          if v[:rank] == 2
-            x = v.map do |vk, vv|
-              "#{vk}=\"#{vv}\"" if vk != :rank
-            end.join(' ')
-
-            puts "  #{k} [#{x}];"
-          end
-        end
-        puts "  }"
-
-        puts "  { rank=same; "
-        self.class.mods.each do |k,v|
-          if v[:rank] == 3
-            x = v.map do |vk, vv|
-              "#{vk}=\"#{vv}\"" if vk != :rank
-            end.join(' ')
-
-            puts "  #{k} [#{x}];"
-          end
-        end
-        puts "  }"
-
-        puts "  { rank=same; "
-        self.class.mods.each do |k,v|
-          if v[:rank] == 4 || v[:rank].nil?
-            x = v.map do |vk, vv|
-              "#{vk}=\"#{vv}\"" if vk != :rank
-            end.join(' ')
-
-            puts "  #{k} [#{x}];"
-          end
-        end
-        puts "  }"
 
         # Data flow
         self.class.flows.each do |k,v|
           if v[:importance] != :secondary
-            puts ""
-            puts "  // #{v['name']}"
-            puts "  " + v['mods'].join(' -> ') + " [color=blue penwidth=2.5];"
+            grout ""
+            grout "  // #{v[:name]}"
+            grout "  #{v[:mods].join(' -> ')} #{attrs(v, extra: {color: 'blue', penwidth: 2.5}, skip: [:mods])};"
           end
         end
 
-        # Data flow
+        # Data flow -- secondary
         self.class.flows.each do |k,v|
           if v[:importance] == :secondary
-            puts ""
-            puts "  // #{v['name']}"
-            puts "  " + v['mods'].join(' -> ') + " [color=blue penwidth=1.0];"
+            grout ""
+            grout "  // #{v[:name]}"
+            grout "  #{v[:mods].join(' -> ')} #{attrs(v, extra: {color: 'blue', penwidth: 1.0}, skip: [:mods])};"
           end
         end
 
         # Control flow
         self.class.cflows.each do |k,v|
-          puts ""
-          puts "  // control -- #{v['name']}"
-          puts "  " + v['mods'].join(' -> ') + " [arrowhead=dot penwidth=0.5];"
+          grout ""
+          grout "  // control -- #{v[:name]}"
+          grout "  #{v[:mods].join(' -> ')} #{attrs(v, extra: {arrowhead: 'dot', penwidth: 0.5}, skip: [:mods])};"
         end
 
-        puts "}"
+        grout "}"
       end
     end
 
@@ -143,8 +193,8 @@ module GraphMod
         define_method( a ) do |name, mods, options={}|
           @flows ||= {}
           @flows[a] = options
-          @flows[a]['name'] = name
-          @flows[a]['mods'] = mods
+          @flows[a][:label] = name
+          @flows[a][:mods] = mods
         end
 
       end
@@ -169,8 +219,8 @@ module GraphMod
         define_method( name ) do |flow_name, mods, options={}|
           @cflows ||= {}
           @cflows[name] = options
-          @cflows[name]['name'] = flow_name
-          @cflows[name]['mods'] = mods
+          @cflows[name][:label] = flow_name
+          @cflows[name][:mods] = mods
         end
 
       end
