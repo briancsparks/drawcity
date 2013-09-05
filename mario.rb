@@ -4,26 +4,32 @@ require "./mod.rb"
 
 class RailsApp < GvItem
   geom color: 'blue', penwidth: 2.5, shape: 'folder'
+end
 
+class NetService < GvItem
+  geom color: 'blue', penwidth: 3, shape: 'box'
+end
+
+class NotSw < GvItem
+  geom shape: 'octagon'
 end
 
 class Mario < Graph
-  mods :pftwService, :pftwApp, :agent, :mi6, :jobFlow, :browser, :printer #, :appServer
 
-  pftwApp      "printFromTheWeb App"      , rank: 1, type: :rails
-  jobFlow      "Job Flow"                 , rank: 1
-  #appServer    "Application"              , rank: 1, type: :rails
+  mods :brian
+  mods2 :browser, :printer, :agent, :pftwService, :appServer, :pftwApp, :jobFlow, :mi6
 
-  mods2 :appServer
-  appServer RailsApp.new(label: "Application", rank: 1)
+  pftwApp       RailsApp.new(label: "printFromTheWeb App", rank: 1)
+  jobFlow       NetService.new(label: "Job Flow", rank: 1)
+  appServer     RailsApp.new(label: "Application", rank: 1)
 
-  mi6          "MI6"                      , rank: 2
-  pftwService  "printFromTheWeb Service"  , rank: 2
+  pftwService   NetService.new(label: "printFromTheWeb Service", rank: 2)
+  mi6           NetService.new(label: "MI6", rank: 2)
 
-  agent        "Agent"                    , rank: 3
+  agent         NetService.new(label: "Agent", rank: 3)
 
-  browser      "Browser"                  , rank: 4, type: :notSw
-  printer      "Printer"                  , rank: 4, type: :notSw
+  browser       NotSw.new(label: "Browser", rank: 4)
+  printer       NotSw.new(label: "Priner", rank: 4)
 
   # Control flows -- invoking print, get the PCL
   cflows :print, :getPcl
@@ -42,21 +48,6 @@ class Mario < Graph
   imagePng    "PNG", [:appServer, :jobFlow]
 
 end
-
-#class Luigi < Graph
-#  mods :one, :two
-#
-#  one "One"
-#  two "Two"
-#
-#  cflows :ccc
-#  cccc "ccc", [:one]
-#  flows :cardinal
-#  cardinal "Cardinal", [:one, :two]
-#end
-
-#l = Luigi.new
-#l.to_s
 
 m = Mario.new
 m.to_s

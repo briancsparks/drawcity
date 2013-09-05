@@ -23,7 +23,6 @@ module GvItemMod
     @geom ||= {}
 
     options.each do |k, v|
-      #attr_accessor(k)
       @geom[k] = v
     end
 
@@ -76,7 +75,7 @@ module GraphMod
   end
 
   def mods( *arr )
-    return @mods if arr.empty?
+    return @mods || {} if arr.empty?
 
     attr_accessor(*arr)
 
@@ -117,7 +116,6 @@ module GraphMod
 
         grout "digraph {"
         grout "  rankdir=TB;"
-        #grout "  splines=true;"
         grout "  nodesep=1.5;"
         grout "  ranksep=1.0;"
 
@@ -135,9 +133,7 @@ module GraphMod
           self.class.mods2.each do |k,v|
             if v[:item].rank == r
               node_group << "    #{k} #{v[:item]};"
-            #  node_group << "    #{k} #{attrs(v, skip: [:rank])};"
             end
-            #node_group << m.to_s
           end
 
           if node_group.length > 0
@@ -231,5 +227,4 @@ end
 
 class Graph
   extend GraphMod
-  #mkflows :a, "A", foo: :bar
 end
