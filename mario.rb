@@ -19,17 +19,17 @@ class Mario < Graph
   mods :brian
   mods2 :browser, :printer, :agent, :pftwService, :appServer, :pftwApp, :jobFlow, :mi6
 
-  pftwApp       RailsApp.new(label: "printFromTheWeb App", rank: 1)
-  jobFlow       NetService.new(label: "Job Flow", rank: 1)
-  appServer     RailsApp.new(label: "Application", rank: 1)
+  pftwApp       RailsApp.new(   label: "printFromTheWeb App",     rank: 1)
+  jobFlow       NetService.new( label: "Job Flow",                rank: 1)
+  appServer     RailsApp.new(   label: "Application",             rank: 1)
 
-  pftwService   NetService.new(label: "printFromTheWeb Service", rank: 2)
-  mi6           NetService.new(label: "MI6", rank: 2)
+  pftwService   NetService.new( label: "printFromTheWeb Service", rank: 2)
+  mi6           NetService.new( label: "MI6",                     rank: 2)
 
-  agent         NetService.new(label: "Agent", rank: 3)
+  agent         NetService.new( label: "Agent",                   rank: 3)
 
-  browser       NotSw.new(label: "Browser", rank: 4)
-  printer       NotSw.new(label: "Priner", rank: 4)
+  browser       NotSw.new(      label: "Browser",                 rank: 4)
+  printer       NotSw.new(      label: "Priner",                  rank: 4)
 
   # Control flows -- invoking print, get the PCL
   cflows :print, :getPcl
