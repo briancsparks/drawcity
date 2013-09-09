@@ -12,18 +12,26 @@ module Gv
       child.extend ClassMethods
     end
 
-    def initialize(sym, name, options_={})
-      @sym, @name, @options = sym, name, options_
+    def initialize(sym, name, list, options={})
+      @sym, @name, @list, @options = sym, name, list, options
 
-      if options_[:rank]
-        @rank = options_[:rank]
-        options_.delete(:rank)
+      if @options[:rank]
+        @rank = @options[:rank]
+        @options.delete(:rank)
       end
       
     end
 
     def render
-      "#{@sym} [#{label_item}#{options}];"
+      if @list.empty?
+        "#{@sym} [#{label_item}#{options}];"
+      else
+        "#{flow} [#{label_item}#{options}];"
+      end
+    end
+
+    def flow
+      @list.join(' -> ')
     end
 
     def label_item
@@ -32,10 +40,11 @@ module Gv
     end
 
     def options
-      gv_ify(@options) + gv_ify(self.class.type_options)
-      #'' + @options.map do |k,v|
-      #  "#{k}=\"#{v}\""
-      #end.join(' ')
+      gv_ify(type_options.merge(@options))
+    end
+
+    def type_options
+      self.class.type_options
     end
 
     def hello
