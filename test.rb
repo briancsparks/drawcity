@@ -7,7 +7,7 @@ class MyGraph
 
   mod_type :service, color: 'blue', penwidth: 3, shape: 'box'
 
-  service :mi6, "MI6", rank: 2
+  service :mi6, "MI6", rank: 2, asdf: 5
   service :luigi, "Luigi", rank: 1
 end
 
