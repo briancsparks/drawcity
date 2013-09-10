@@ -1,5 +1,5 @@
 
-require './item.rb'
+require File.join(File.dirname(__FILE__), 'item.rb')
 
 module Gv
 
@@ -95,6 +95,10 @@ module Gv
 
           def signal_flow(sym, name, mods, options={})
             @action.signal_flow(sym, name, mods, options.merge({action: @name_sym}))
+          end
+
+          def action(name_sym, &blk)
+            @action.action("#{@name_sym}:#{name_sym}", &blk)
           end
         end
 
