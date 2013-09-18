@@ -70,9 +70,9 @@ module Gv
 
         # Create a method so a class can add a flow_type to itself
         metaclass.instance_eval do
-          define_method(type_sym) do |sym, name, mods, options = {}|
+          define_method(type_sym) do |mods, sym, name, options = {}|
             @flows ||= {}
-            @flows[sym] = @flow_type[type_sym].new sym, name, mods, options
+            @flows[sym] = @flow_type[type_sym].new sym, name, mods.map( &:to_sym), options
           end
         end
 
