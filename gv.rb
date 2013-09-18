@@ -8,8 +8,8 @@ module Gv
       child.extend ClassMethods
     end
 
-    def to_s
-      self.class.to_s
+    def render(spec)
+      self.class.render(spec)
     end
 
     module ClassMethods
@@ -17,6 +17,9 @@ module Gv
 
       # =============================================================
       # Create a mod_type.
+      #
+      # For example:
+      #   mod_type    :service, color: 'blue', penwidth: 3, shape: 'oval'
       #
       def mod_type(type_sym, type_options = {})
         @mod_types ||= {}
@@ -78,42 +81,65 @@ module Gv
       # =============================================================
       # Create an action
       #
-      def action(name_sym, &blk)
+      def action(name, &blk)
+        name = name.to_s
 
         klass = Class.new do
-          def initialize(action, name_sym)
-            @action, @name_sym = action, name_sym
+          def initialize(action, name)
+            @action, @name = action, name
           end
 
           def control_flow(sym, name, mods, options={})
-            @action.control_flow(sym, name, mods, options.merge({action: @name_sym}))
+            @action.control_flow(sym, name, mods, options.merge({action: @name}))
           end
 
           def data_flow(sym, name, mods, options={})
-            @action.data_flow(sym, name, mods, options.merge({action: @name_sym}))
+            @action.data_flow(sym, name, mods, options.merge({action: @name}))
           end
 
           def signal_flow(sym, name, mods, options={})
-            @action.signal_flow(sym, name, mods, options.merge({action: @name_sym}))
+            @action.signal_flow(sym, name, mods, options.merge({action: @name}))
           end
 
-          def action(name_sym, &blk)
-            @action.action("#{@name_sym}:#{name_sym}", &blk)
+          def action(name, &blk)
+            @action.action("#{@name}:#{name}", &blk)
           end
         end
 
-        blk.call klass.new(self, name_sym)
+        blk.call klass.new(self, name)
       end
 
-      def to_s
+      def render(spec)
+        #flow_name = 'print:get_pcl:get_png'
+        involved_mods = @flows.map do |k, flow|
+          flow.involved(spec)
+        end.flatten.uniq
+
+        mods_by_rank = []
+        @mods.each do |mod_name, mod|
+          rank = mod.rank || 99
+          mods_by_rank[rank] ||= {}
+          mods_by_rank[rank][mod_name] = mod
+        end
+
         msg = []
         msg.push "digraph {"
-        msg.push("" + @mods.map do |k,v|
-            v.render
-          end.join("\n"))
+        msg.push "  rankdir=TB;"
 
-        msg.push("" + @flows.map do |k,v|
-            v.render
+        mods_by_rank.each do |mods|
+          if !mods.nil?
+            msg.push("{ rank=same;")
+            msg.push("" + mods.map do |mod_name, mod|
+              mod.render invis: !involved_mods.include?(mod_name)
+            end.join("\n"))
+            msg.push("}")
+          end
+        end
+
+        msg.push "\n\n"
+
+        msg.push("" + @flows.map do |k, flow|
+            flow.render invis: flow.involved(spec).empty?
           end.join("\n")) if !@flows.nil?
 
         msg.push "}"
