@@ -97,8 +97,8 @@ module Gv
             @action.data_flow(sym, name, mods, options.merge({action: @name}))
           end
 
-          def signal_flow(sym, name, mods, options={})
-            @action.signal_flow(sym, name, mods, options.merge({action: @name}))
+          def flyweight(sym, name, mods, options={})
+            @action.flyweight(sym, name, mods, options.merge({action: @name}))
           end
 
           def action(name, &blk)
